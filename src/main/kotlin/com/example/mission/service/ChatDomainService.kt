@@ -56,4 +56,15 @@ class ChatDomainService(
     fun getChatHistory(threadId: Long, excludeChatId: Long): List<Chat> {
         return chatRepository.findTop20ByThreadIdAndIdNotOrderByCreatedAtDesc(threadId, excludeChatId).reversed()
     }
+
+    @Transactional
+    fun deleteThread(userId: Long, threadId: Long) {
+        val thread = threadRepository.findById(threadId)
+            .orElseThrow { BusinessException(ErrorCode.THREAD_NOT_FOUND) }
+        if (thread.user.id != userId) {
+            throw BusinessException(ErrorCode.THREAD_ACCESS_DENIED)
+        }
+        chatRepository.deleteAllByThreadId(thread.id)
+        threadRepository.delete(thread)
+    }
 }
