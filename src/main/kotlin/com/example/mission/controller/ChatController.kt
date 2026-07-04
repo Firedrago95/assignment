@@ -30,27 +30,27 @@ class ChatController(
 
     @GetMapping
     fun getChatHistory(
-        @AuthenticationPrincipal userId: String,
+        @AuthenticationPrincipal userId: Long,
         @RequestParam(required = false) cursor: Long?,
         @RequestParam(defaultValue = "10") limit: Int
     ): ChatHistoryCursorResponse {
-        return chatQueryService.getChatHistoryPaginated(userId.toLong(), cursor, limit)
+        return chatQueryService.getChatHistoryPaginated(userId, cursor, limit)
     }
 
     @PostMapping(produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun createChat(
-        @AuthenticationPrincipal userId: String,
+        @AuthenticationPrincipal userId: Long,
         @RequestBody request: ChatRequest
     ): Flux<String> {
-        return chatAppService.createChat(userId.toLong(), request)
+        return chatAppService.createChat(userId, request)
     }
 
     @DeleteMapping("/threads/{threadId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteThread(
-        @AuthenticationPrincipal userId: String,
+        @AuthenticationPrincipal userId: Long,
         @PathVariable threadId: Long
     ) {
-        chatDomainService.deleteThread(userId.toLong(), threadId)
+        chatDomainService.deleteThread(userId, threadId)
     }
 }

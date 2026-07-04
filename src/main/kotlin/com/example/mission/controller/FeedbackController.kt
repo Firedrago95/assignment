@@ -14,27 +14,27 @@ class FeedbackController(
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun createFeedback(
-        @AuthenticationPrincipal userId: String,
+        @AuthenticationPrincipal userId: Long,
         @RequestBody request: FeedbackRequest
     ) {
-        feedbackService.createFeedback(userId.toLong(), request)
+        feedbackService.createFeedback(userId, request)
     }
 
     @GetMapping
     fun getFeedbacks(
-        @AuthenticationPrincipal userId: String,
+        @AuthenticationPrincipal userId: Long,
         @RequestParam(required = false) isPositive: Boolean?,
         @org.springframework.data.web.PageableDefault(sort = ["createdAt"], direction = org.springframework.data.domain.Sort.Direction.DESC) pageable: org.springframework.data.domain.Pageable
     ): org.springframework.data.domain.Page<com.example.mission.dto.FeedbackResponseDto> {
-        return feedbackService.getFeedbacks(userId.toLong(), isPositive, pageable)
+        return feedbackService.getFeedbacks(userId, isPositive, pageable)
     }
 
     @PatchMapping("/{feedbackId}/resolve")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun resolveFeedback(
-        @AuthenticationPrincipal userId: String,
+        @AuthenticationPrincipal userId: Long,
         @PathVariable feedbackId: Long
     ) {
-        feedbackService.resolveFeedback(userId.toLong(), feedbackId)
+        feedbackService.resolveFeedback(userId, feedbackId)
     }
 }
