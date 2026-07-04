@@ -12,19 +12,13 @@ import java.time.ZonedDateTime
         Index(name = "idx_thread_created", columnList = "thread_id, created_at ASC")
     ]
 )
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "role", discriminatorType = DiscriminatorType.STRING)
 @EntityListeners(AuditingEntityListener::class)
-class Chat(
+abstract class Chat(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "thread_id", nullable = false)
     val thread: Thread,
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    val role: ChatRole,
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    var status: ChatStatus = ChatStatus.COMPLETED,
 
     @Column(nullable = false, columnDefinition = "TEXT")
     var content: String
