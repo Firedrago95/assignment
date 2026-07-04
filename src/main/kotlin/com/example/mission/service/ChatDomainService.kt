@@ -9,12 +9,15 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.ZonedDateTime
 
+import com.example.mission.domain.feedback.FeedbackRepository
+
 @Service
 @Transactional
 class ChatDomainService(
     private val userRepository: UserRepository,
     private val threadRepository: ThreadRepository,
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val feedbackRepository: FeedbackRepository
 ) {
     fun prepareChats(userId: Long, content: String): Pair<UserChat, AiChat> {
         val user = userRepository.findById(userId)
@@ -64,6 +67,7 @@ class ChatDomainService(
         if (thread.user.id != userId) {
             throw BusinessException(ErrorCode.THREAD_ACCESS_DENIED)
         }
+        feedbackRepository.deleteAllByThreadId(thread.id)
         chatRepository.deleteAllByThreadId(thread.id)
         threadRepository.delete(thread)
     }
