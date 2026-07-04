@@ -13,9 +13,9 @@ class OpenAiClient(
     @Value("\${openai.url:https://api.openai.com/v1/chat/completions}") private val openAiUrl: String
 ) : AiClient {
 
-    override fun askStreaming(messages: List<AiMessageDto>): Flux<String> {
+    override fun askStreaming(messages: List<AiMessageDto>, model: String): Flux<String> {
         val requestBody = mapOf(
-            "model" to "gpt-3.5-turbo",
+            "model" to model,
             "messages" to messages,
             "stream" to true
         )

@@ -33,7 +33,7 @@ class ChatAppService(
         .flatMapMany { (aiChatId, aiMessages) ->
             val responseBuilder = StringBuilder()
 
-            aiClient.askStreaming(aiMessages)
+            aiClient.askStreaming(aiMessages, request.model)
                 .doOnNext { chunk -> responseBuilder.append(chunk) }
                 .doFinally { signalType ->
                     Mono.fromRunnable<Void> {

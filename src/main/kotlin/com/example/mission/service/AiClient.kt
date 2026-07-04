@@ -4,5 +4,5 @@ import com.example.mission.dto.AiMessageDto
 import reactor.core.publisher.Flux
 
 interface AiClient {
-    fun askStreaming(messages: List<AiMessageDto>): Flux<String>
+    fun askStreaming(messages: List<AiMessageDto>, model: String): Flux<String>
 }
