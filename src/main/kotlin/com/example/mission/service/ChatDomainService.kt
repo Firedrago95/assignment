@@ -5,11 +5,20 @@ import com.example.mission.domain.chat.Thread
 import com.example.mission.domain.user.UserRepository
 import com.example.mission.global.exception.BusinessException
 import com.example.mission.global.exception.ErrorCode
+import com.example.mission.dto.AiMessageDto
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.ZonedDateTime
+import org.springframework.data.redis.core.StringRedisTemplate
+import com.fasterxml.jackson.databind.ObjectMapper
+import java.util.concurrent.TimeUnit
 
 import com.example.mission.domain.feedback.FeedbackRepository
+
+data class CachedChatDto(
+    val threadId: Long,
+    val role: String,
+    val content: String
+)
 
 @Service
 @Transactional
@@ -17,31 +26,55 @@ class ChatDomainService(
     private val userRepository: UserRepository,
     private val threadRepository: ThreadRepository,
     private val chatRepository: ChatRepository,
-    private val feedbackRepository: FeedbackRepository
+    private val feedbackRepository: FeedbackRepository,
+    private val redisTemplate: StringRedisTemplate,
+    private val objectMapper: ObjectMapper
 ) {
     fun prepareChats(userId: Long, content: String): Pair<UserChat, AiChat> {
         val user = userRepository.findById(userId)
             .orElseThrow { BusinessException(ErrorCode.USER_NOT_FOUND) }
 
-        val now = ZonedDateTime.now()
-        
-        var thread = threadRepository.findTopByUserIdOrderByUpdatedAtDesc(userId)
-        if (thread == null || thread.isExpired(now)) {
-            thread = threadRepository.save(Thread(user = user))
-        } else {
-            thread.updatedAt = now
+        val lockKey = "lock:prepare_chat:$userId"
+        val isLocked = redisTemplate.opsForValue().setIfAbsent(lockKey, "LOCKED", 3, TimeUnit.SECONDS)
+
+        if (isLocked == false) {
+            throw BusinessException(ErrorCode.TOO_MANY_REQUESTS)
         }
 
-        val userChat = chatRepository.save(UserChat(thread = thread, content = content))
-        val aiChat = chatRepository.save(AiChat(thread = thread, content = "", status = ChatStatus.PENDING, parentChat = userChat))
+        try {
+            val redisKey = "active_chat:user:$userId"
+            val firstChatJson = redisTemplate.opsForList().index(redisKey, 0)
+            
+            var thread: Thread? = null
+            if (firstChatJson != null) {
+                val cachedChat = objectMapper.readValue(firstChatJson, CachedChatDto::class.java)
+                thread = threadRepository.getReferenceById(cachedChat.threadId)
+            } else {
+                thread = threadRepository.save(Thread(user = user))
+            }
 
-        return Pair(userChat, aiChat)
+            val userChat = chatRepository.save(UserChat(thread = thread, content = content))
+            val aiChat = chatRepository.save(AiChat(thread = thread, content = "", status = ChatStatus.PENDING, parentChat = userChat))
+
+            val cachedUserChat = CachedChatDto(threadId = thread.id, role = "user", content = userChat.content)
+            redisTemplate.opsForList().rightPush(redisKey, objectMapper.writeValueAsString(cachedUserChat))
+            redisTemplate.expire(redisKey, 30, TimeUnit.MINUTES)
+
+            return Pair(userChat, aiChat)
+        } finally {
+            redisTemplate.delete(lockKey)
+        }
     }
 
     fun updateAiChatSuccess(aiChatId: Long, fullContent: String) {
         val chat = chatRepository.findById(aiChatId).orElseThrow() as AiChat
         chat.content = fullContent
         chat.status = ChatStatus.COMPLETED
+
+        val redisKey = "active_chat:user:${chat.thread.user.id}"
+        val cachedAiChat = CachedChatDto(threadId = chat.thread.id, role = "assistant", content = fullContent)
+        redisTemplate.opsForList().rightPush(redisKey, objectMapper.writeValueAsString(cachedAiChat))
+        redisTemplate.expire(redisKey, 30, TimeUnit.MINUTES)
     }
 
     fun updateAiChatFailed(aiChatId: Long) {
@@ -56,8 +89,14 @@ class ChatDomainService(
     }
 
     @Transactional(readOnly = true)
-    fun getChatHistory(threadId: Long, excludeChatId: Long): List<Chat> {
-        return chatRepository.findTop20ByThreadIdAndIdNotOrderByCreatedAtDesc(threadId, excludeChatId).reversed()
+    fun getChatHistory(userId: Long): List<AiMessageDto> {
+        val redisKey = "active_chat:user:$userId"
+        val cachedJsons = redisTemplate.opsForList().range(redisKey, 0, -1) ?: emptyList()
+        
+        return cachedJsons.map { json ->
+            val cached = objectMapper.readValue(json, CachedChatDto::class.java)
+            AiMessageDto(role = cached.role, content = cached.content)
+        }
     }
 
     @Transactional

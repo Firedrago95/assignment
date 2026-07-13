@@ -8,12 +8,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.ZonedDateTime
 
 @Entity
-@Table(
-    name = "threads",
-    indexes = [
-        Index(name = "idx_user_updated", columnList = "user_id, updated_at DESC")
-    ]
-)
+@Table(name = "threads")
 @EntityListeners(AuditingEntityListener::class)
 class Thread(
     @ManyToOne(fetch = FetchType.LAZY)
@@ -31,9 +26,4 @@ class Thread(
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
     var updatedAt: ZonedDateTime? = null
-
-    fun isExpired(now: ZonedDateTime): Boolean {
-        if (updatedAt == null) return false
-        return updatedAt!!.plusMinutes(30).isBefore(now)
-    }
 }

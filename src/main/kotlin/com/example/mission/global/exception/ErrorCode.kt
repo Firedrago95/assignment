@@ -22,5 +22,7 @@ enum class ErrorCode(
     EXTERNAL_API_CLIENT_ERROR(HttpStatus.BAD_REQUEST, "잘못된 프롬프트 입력이거나 AI 정책을 위반했습니다."),
     EXTERNAL_API_SERVER_ERROR(HttpStatus.BAD_GATEWAY, "외부 AI 서비스 연동 중 오류가 발생했습니다."),
     
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "너무 잦은 요청입니다. 잠시 후 다시 시도해주세요."),
+
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.")
 }

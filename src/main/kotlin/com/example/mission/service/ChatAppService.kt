@@ -20,13 +20,7 @@ class ChatAppService(
     fun createChat(userId: Long, request: ChatRequest): Flux<String> {
         return Mono.fromCallable {
             val (userChat, aiChat) = chatDomainService.prepareChats(userId, request.content)
-            val history = chatDomainService.getChatHistory(userChat.thread.id, aiChat.id)
-            val aiMessages = history.map { 
-                AiMessageDto(
-                    role = if (it is UserChat) "user" else "assistant", 
-                    content = it.content
-                ) 
-            }
+            val aiMessages = chatDomainService.getChatHistory(userId)
             Pair(aiChat.id, aiMessages)
         }
         .subscribeOn(Schedulers.boundedElastic())

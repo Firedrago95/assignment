@@ -9,11 +9,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/mission_db
       - SPRING_DATASOURCE_USERNAME=mission_user
       - SPRING_DATASOURCE_PASSWORD=mission_password
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
     restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: mission-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
 
   postgres:
     image: postgres:15.8
