@@ -29,6 +29,7 @@ class ChatAppService(
 
             aiClient.askStreaming(aiMessages, request.model)
                 .doOnNext { chunk -> responseBuilder.append(chunk) }
+                .publishOn(Schedulers.boundedElastic())
                 .doFinally { signalType ->
                     Mono.fromRunnable<Void> {
                         val finalContent = responseBuilder.toString()
