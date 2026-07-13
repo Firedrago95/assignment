@@ -8,13 +8,19 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.Index
 import jakarta.persistence.Table
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.ZonedDateTime
 
 @Entity
-@Table(name = "users")
+@Table(
+    name = "users",
+    indexes = [
+        Index(name = "idx_user_created_at", columnList = "created_at")
+    ]
+)
 @EntityListeners(AuditingEntityListener::class)
 class User(
     @Column(nullable = false, unique = true)
@@ -35,6 +41,6 @@ class User(
     val id: Long = 0
 
     @CreatedDate
-    @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
     var createdAt: ZonedDateTime? = null
 }

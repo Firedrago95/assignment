@@ -12,7 +12,8 @@ import java.time.ZonedDateTime
     name = "threads",
     indexes = [
         Index(name = "idx_user_id_id", columnList = "user_id, id DESC"),
-        Index(name = "idx_user_id_id_asc", columnList = "user_id, id ASC")
+        Index(name = "idx_user_id_id_asc", columnList = "user_id, id ASC"),
+        Index(name = "idx_thread_created_at", columnList = "created_at DESC")
     ]
 )
 @EntityListeners(AuditingEntityListener::class)

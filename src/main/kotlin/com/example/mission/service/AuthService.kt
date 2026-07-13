@@ -2,6 +2,8 @@ package com.example.mission.service
 
 import com.example.mission.domain.user.Role
 import com.example.mission.domain.user.User
+import com.example.mission.domain.user.LoginHistory
+import com.example.mission.domain.user.LoginHistoryRepository
 import com.example.mission.domain.user.UserRepository
 import com.example.mission.dto.LoginRequest
 import com.example.mission.dto.SignupRequest
@@ -17,7 +19,8 @@ import org.springframework.transaction.annotation.Transactional
 class AuthService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val jwtTokenProvider: JwtTokenProvider
+    private val jwtTokenProvider: JwtTokenProvider,
+    private val loginHistoryRepository: LoginHistoryRepository
 ) {
 
     @Transactional
@@ -36,7 +39,7 @@ class AuthService(
         userRepository.save(user)
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     fun login(request: LoginRequest): TokenResponse {
         val user = userRepository.findByEmail(request.email)
             ?: throw BusinessException(ErrorCode.INVALID_CREDENTIALS)
@@ -44,6 +47,8 @@ class AuthService(
         if (!passwordEncoder.matches(request.password, user.passwordHash)) {
             throw BusinessException(ErrorCode.INVALID_CREDENTIALS)
         }
+
+        loginHistoryRepository.save(LoginHistory(user = user))
 
         val token = jwtTokenProvider.createToken(user.id, user.email, user.role.name)
         return TokenResponse(token)
