@@ -12,4 +12,12 @@ interface ThreadRepository : JpaRepository<Thread, Long> {
     // Admin: cursor desc
     fun findByIdLessThanOrderByIdDesc(id: Long, pageable: Pageable): List<Thread>
     fun findAllByOrderByIdDesc(pageable: Pageable): List<Thread>
+
+    // Member: cursor asc
+    fun findByUserIdAndIdGreaterThanOrderByIdAsc(userId: Long, id: Long, pageable: Pageable): List<Thread>
+    fun findByUserIdOrderByIdAsc(userId: Long, pageable: Pageable): List<Thread>
+
+    // Admin: cursor asc
+    fun findByIdGreaterThanOrderByIdAsc(id: Long, pageable: Pageable): List<Thread>
+    fun findAllByOrderByIdAsc(pageable: Pageable): List<Thread>
 }

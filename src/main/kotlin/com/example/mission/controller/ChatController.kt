@@ -32,9 +32,10 @@ class ChatController(
     fun getChatHistory(
         @AuthenticationPrincipal userId: Long,
         @RequestParam(required = false) cursor: Long?,
-        @RequestParam(defaultValue = "10") limit: Int
+        @RequestParam(defaultValue = "10") limit: Int,
+        @RequestParam(defaultValue = "DESC") sortDirection: String
     ): ChatHistoryCursorResponse {
-        return chatQueryService.getChatHistoryPaginated(userId, cursor, limit)
+        return chatQueryService.getChatHistoryPaginated(userId, cursor, limit, sortDirection)
     }
 
     @PostMapping(produces = [MediaType.TEXT_EVENT_STREAM_VALUE])

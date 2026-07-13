@@ -8,7 +8,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.ZonedDateTime
 
 @Entity
-@Table(name = "threads")
+@Table(
+    name = "threads",
+    indexes = [
+        Index(name = "idx_user_id_id", columnList = "user_id, id DESC"),
+        Index(name = "idx_user_id_id_asc", columnList = "user_id, id ASC")
+    ]
+)
 @EntityListeners(AuditingEntityListener::class)
 class Thread(
     @ManyToOne(fetch = FetchType.LAZY)
